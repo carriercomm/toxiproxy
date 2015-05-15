@@ -8,6 +8,8 @@ import (
 
 // Benchmark numbers:
 //
+// Toxiproxy 1.1
+//
 // 1x Toxics:
 //     BenchmarkDirect             2000            694467 ns/op
 //     BenchmarkProxy              2000           1136668 ns/op
