@@ -9,7 +9,7 @@ COMBINED_GOPATH=$(GODEP_PATH):$(ORIGINAL_PATH)
 
 all: deb linux darwin docker
 deb: $(DEB)
-darwin: tmp/build/toxiproxy-darwin-amd64 
+darwin: tmp/build/toxiproxy-darwin-amd64
 linux: tmp/build/toxiproxy-linux-amd64
 
 build:
@@ -20,7 +20,7 @@ clean:
 	rm *.deb
 
 test:
-	GOMAXPROCS=4 GOPATH=$(COMBINED_GOPATH) go test -v
+	GOMAXPROCS=4 GOPATH=$(COMBINED_GOPATH) go test -v -race ./...
 
 tmp/build/toxiproxy-linux-amd64:
 	GOOS=linux GOARCH=amd64 GOPATH=$(COMBINED_GOPATH) go build -o $(@)
