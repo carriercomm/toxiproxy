@@ -1,4 +1,4 @@
-package main
+package toxiproxy
 
 import (
 	"io/ioutil"
@@ -269,12 +269,9 @@ func TestResetState(t *testing.T) {
 			"jitter":  10,
 		})
 		if err != nil {
-			t.Fatal("Error setting toxic: %+v", err)
+			t.Fatal("Error setting toxic: ", err)
 		}
 
-		if latency["enabled"] != true {
-			t.Fatal("Latency toxic did not start up")
-		}
 		if latency["latency"] != 100.0 || latency["jitter"] != 10.0 {
 			t.Fatal("Latency toxic did not start up with correct settings")
 		}
@@ -331,8 +328,7 @@ func TestAddToxic(t *testing.T) {
 			t.Fatal("Unable to create proxy:", err)
 		}
 
-		latency, err := testProxy.SetToxic("latency", "downstream", tclient.Toxic{
-			"enabled": true,
+		latency, err := testProxy.AddToxic("foobar", "latency", "downstream", tclient.Toxic{
 			"latency": 100,
 			"jitter":  10,
 		})
@@ -340,9 +336,6 @@ func TestAddToxic(t *testing.T) {
 			t.Fatal("Error setting toxic:", err)
 		}
 
-		if latency["enabled"] != true {
-			t.Fatal("Latency toxic did not start up")
-		}
 		if latency["latency"] != 100.0 || latency["jitter"] != 10.0 {
 			t.Fatal("Latency toxic did not start up with correct settings")
 		}
@@ -442,23 +435,17 @@ func TestUpdateToxics(t *testing.T) {
 			t.Fatal("Error setting toxic: %+v", err)
 		}
 
-		if latency["enabled"] != true {
-			t.Fatal("Latency toxic did not start up")
-		}
 		if latency["latency"] != 100.0 || latency["jitter"] != 10.0 {
 			t.Fatal("Latency toxic did not start up with correct settings: %+v", latency)
 		}
 
-		latency, err = testProxy.SetToxic("latency", "downstream", tclient.Toxic{
+		latency, err = testProxy.UpdateToxic("latency", "downstream", tclient.Toxic{
 			"latency": 1000,
 		})
 		if err != nil {
 			t.Fatal("Error setting toxic: %+v", err)
 		}
 
-		if latency["enabled"] != true {
-			t.Fatal("Latency toxic did not stay enabled")
-		}
 		if latency["latency"] != 1000.0 || latency["jitter"] != 10.0 {
 			t.Fatal("Latency toxic did not get updated with the correct settings")
 		}

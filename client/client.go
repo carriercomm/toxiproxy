@@ -231,7 +231,7 @@ func (proxy *Proxy) UpdateToxic(name, direction string, toxic Toxic) (Toxic, err
 		return nil, err
 	}
 
-	err = checkError(resp, http.StatusOK, "SetToxic")
+	err = checkError(resp, http.StatusOK, "UpdateToxic")
 	if err != nil {
 		return nil, err
 	}
