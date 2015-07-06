@@ -1,11 +1,9 @@
 package toxics
 
-import "github.com/Shopify/toxiproxy/stream"
-
 // The NoopToxic passes all data through without any toxic effects.
 type NoopToxic struct{}
 
-func (t *NoopToxic) Pipe(stub *stream.ToxicStub) {
+func (t *NoopToxic) Pipe(stub *ToxicStub) {
 	for {
 		select {
 		case <-stub.Interrupt:

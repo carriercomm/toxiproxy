@@ -1,10 +1,6 @@
 package toxics
 
-import (
-	"time"
-
-	"github.com/Shopify/toxiproxy/stream"
-)
+import "time"
 
 // The TimeoutToxic stops any data from flowing through, and will close the connection after a timeout.
 // If the timeout is set to 0, then the connection will not be closed.
@@ -13,7 +9,7 @@ type TimeoutToxic struct {
 	Timeout int64 `json:"timeout"`
 }
 
-func (t *TimeoutToxic) Pipe(stub *stream.ToxicStub) {
+func (t *TimeoutToxic) Pipe(stub *ToxicStub) {
 	timeout := time.Duration(t.Timeout) * time.Millisecond
 	if timeout > 0 {
 		select {

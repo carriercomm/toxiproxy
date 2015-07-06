@@ -1,4 +1,4 @@
-package proxy
+package toxiproxy
 
 import (
 	"io"
@@ -18,18 +18,18 @@ import (
 // Input > ToxicStub > ToxicStub > Output
 //
 type ToxicLink struct {
-	stubs  []*stream.ToxicStub
+	stubs  []*toxics.ToxicStub
 	proxy  *Proxy
 	toxics *ToxicCollection
 	input  *stream.ChanWriter
 	output *stream.ChanReader
 }
 
-func NewToxicLink(proxy *Proxy, toxics *ToxicCollection) *ToxicLink {
+func NewToxicLink(proxy *Proxy, collection *ToxicCollection) *ToxicLink {
 	link := &ToxicLink{
-		stubs:  make([]*stream.ToxicStub, len(toxics.chain), cap(toxics.chain)),
+		stubs:  make([]*toxics.ToxicStub, len(collection.chain), cap(collection.chain)),
 		proxy:  proxy,
-		toxics: toxics,
+		toxics: collection,
 	}
 
 	// Initialize the link with ToxicStubs
@@ -37,7 +37,7 @@ func NewToxicLink(proxy *Proxy, toxics *ToxicCollection) *ToxicLink {
 	link.input = stream.NewChanWriter(last)
 	for i := 0; i < len(link.stubs); i++ {
 		next := make(chan *stream.StreamChunk)
-		link.stubs[i] = stream.NewToxicStub(last, next)
+		link.stubs[i] = toxics.NewToxicStub(last, next)
 		last = next
 	}
 	link.output = stream.NewChanReader(last)
@@ -84,7 +84,7 @@ func (link *ToxicLink) AddToxic(toxic *toxics.ToxicWrapper) {
 	// Interrupt the last toxic so that we don't have a race when moving channels
 	if link.stubs[i-1].InterruptToxic() {
 		newin := make(chan *stream.StreamChunk)
-		link.stubs = append(link.stubs, stream.NewToxicStub(newin, link.stubs[i-1].Output))
+		link.stubs = append(link.stubs, toxics.NewToxicStub(newin, link.stubs[i-1].Output))
 		link.stubs[i-1].Output = newin
 
 		go link.stubs[i].Run(toxic)

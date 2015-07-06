@@ -1,4 +1,4 @@
-package proxy
+package toxiproxy
 
 import (
 	"io/ioutil"
@@ -9,7 +9,7 @@ import (
 	tclient "github.com/Shopify/toxiproxy/client"
 )
 
-var testServer *server
+var testServer *ApiServer
 
 var client = tclient.NewClient("http://127.0.0.1:8475")
 var testProxy = client.NewProxy(&tclient.Proxy{
@@ -23,7 +23,7 @@ func WithServer(t *testing.T, f func(string)) {
 	// Make sure only one server is running at a time. Apparently there's no clean
 	// way to shut it down between each test run.
 	if testServer == nil {
-		testServer = NewServer(NewProxyCollection())
+		testServer = NewServer()
 		go testServer.Listen("localhost", "8475")
 
 		// Allow server to start. There's no clean way to know when it listens.
@@ -32,7 +32,7 @@ func WithServer(t *testing.T, f func(string)) {
 
 	f("http://localhost:8475")
 
-	err := testServer.collection.Clear()
+	err := testServer.Collection.Clear()
 	if err != nil {
 		t.Error("Failed to clear collection", err)
 	}

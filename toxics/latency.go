@@ -3,8 +3,6 @@ package toxics
 import (
 	"math/rand"
 	"time"
-
-	"github.com/Shopify/toxiproxy/stream"
 )
 
 // The LatencyToxic passes data through with the a delay of latency +/- jitter added.
@@ -24,7 +22,7 @@ func (t *LatencyToxic) delay() time.Duration {
 	return time.Duration(delay) * time.Millisecond
 }
 
-func (t *LatencyToxic) Pipe(stub *stream.ToxicStub) {
+func (t *LatencyToxic) Pipe(stub *ToxicStub) {
 	for {
 		select {
 		case <-stub.Interrupt:

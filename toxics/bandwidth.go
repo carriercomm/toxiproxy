@@ -1,7 +1,10 @@
 package toxics
 
-import "time"
-import "github.com/Shopify/toxiproxy/stream"
+import (
+	"time"
+
+	"github.com/Shopify/toxiproxy/stream"
+)
 
 // The BandwidthToxic passes data through at a limited rate
 type BandwidthToxic struct {
@@ -9,7 +12,7 @@ type BandwidthToxic struct {
 	Rate int64 `json:"rate"`
 }
 
-func (t *BandwidthToxic) Pipe(stub *stream.ToxicStub) {
+func (t *BandwidthToxic) Pipe(stub *ToxicStub) {
 	var sleep time.Duration = 0
 	for {
 		select {

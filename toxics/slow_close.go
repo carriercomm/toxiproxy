@@ -1,10 +1,6 @@
 package toxics
 
-import (
-	"time"
-
-	"github.com/Shopify/toxiproxy/stream"
-)
+import "time"
 
 // The SlowCloseToxic stops the TCP connection from closing until after a delay.
 type SlowCloseToxic struct {
@@ -12,7 +8,7 @@ type SlowCloseToxic struct {
 	Delay int64 `json:"delay"`
 }
 
-func (t *SlowCloseToxic) Pipe(stub *stream.ToxicStub) {
+func (t *SlowCloseToxic) Pipe(stub *ToxicStub) {
 	for {
 		select {
 		case <-stub.Interrupt:

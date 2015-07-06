@@ -1,4 +1,4 @@
-package proxy
+package toxiproxy
 
 import (
 	"encoding/json"
@@ -17,17 +17,17 @@ var (
 	ErrToxicNotFound = errors.New("toxic not found")
 )
 
-type server struct {
-	collection *ProxyCollection
+type ApiServer struct {
+	Collection *ProxyCollection
 }
 
-func NewServer(collection *ProxyCollection) *server {
-	return &server{
-		collection: collection,
+func NewServer() *ApiServer {
+	return &ApiServer{
+		Collection: NewProxyCollection(),
 	}
 }
 
-func (server *server) Listen(host string, port string) {
+func (server *ApiServer) Listen(host string, port string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/reset", server.ResetState).Methods("GET")
 	r.HandleFunc("/proxies", server.ProxyIndex).Methods("GET")
@@ -56,8 +56,8 @@ func (server *server) Listen(host string, port string) {
 	}
 }
 
-func (server *server) ProxyIndex(response http.ResponseWriter, request *http.Request) {
-	proxies := server.collection.Proxies()
+func (server *ApiServer) ProxyIndex(response http.ResponseWriter, request *http.Request) {
+	proxies := server.Collection.Proxies()
 	marshalData := make(map[string]interface{}, len(proxies))
 
 	for name, proxy := range proxies {
@@ -78,8 +78,8 @@ func (server *server) ProxyIndex(response http.ResponseWriter, request *http.Req
 	}
 }
 
-func (server *server) ResetState(response http.ResponseWriter, request *http.Request) {
-	proxies := server.collection.Proxies()
+func (server *ApiServer) ResetState(response http.ResponseWriter, request *http.Request) {
+	proxies := server.Collection.Proxies()
 
 	for _, proxy := range proxies {
 		err := proxy.Start()
@@ -100,7 +100,7 @@ func (server *server) ResetState(response http.ResponseWriter, request *http.Req
 	}
 }
 
-func (server *server) ProxyCreate(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ProxyCreate(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 
 	// Default fields enable to proxy right away
@@ -132,7 +132,7 @@ func (server *server) ProxyCreate(response http.ResponseWriter, request *http.Re
 		}
 	}
 
-	err = server.collection.Add(proxy)
+	err = server.Collection.Add(proxy)
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusConflict), http.StatusConflict)
 		return
@@ -151,11 +151,11 @@ func (server *server) ProxyCreate(response http.ResponseWriter, request *http.Re
 	}
 }
 
-func (server *server) ProxyShow(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ProxyShow(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
 		return
@@ -173,11 +173,11 @@ func (server *server) ProxyShow(response http.ResponseWriter, request *http.Requ
 	}
 }
 
-func (server *server) ProxyUpdate(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ProxyUpdate(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
 		return
@@ -209,10 +209,10 @@ func (server *server) ProxyUpdate(response http.ResponseWriter, request *http.Re
 	}
 }
 
-func (server *server) ProxyDelete(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ProxyDelete(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 
-	err := server.collection.Remove(vars["proxy"])
+	err := server.Collection.Remove(vars["proxy"])
 	if err != nil {
 		response.Header().Set("Content-Type", "application/json")
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
@@ -226,11 +226,11 @@ func (server *server) ProxyDelete(response http.ResponseWriter, request *http.Re
 	}
 }
 
-func (server *server) ToxicIndex(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ToxicIndex(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
 		return
@@ -256,11 +256,11 @@ func (server *server) ToxicIndex(response http.ResponseWriter, request *http.Req
 	}
 }
 
-func (server *server) ToxicCreate(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ToxicCreate(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
 		return
@@ -293,11 +293,11 @@ func (server *server) ToxicCreate(response http.ResponseWriter, request *http.Re
 	}
 }
 
-func (server *server) ToxicShow(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ToxicShow(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
 		return
@@ -330,11 +330,11 @@ func (server *server) ToxicShow(response http.ResponseWriter, request *http.Requ
 	}
 }
 
-func (server *server) ToxicUpdate(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ToxicUpdate(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "application/json")
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
 		return
@@ -367,10 +367,10 @@ func (server *server) ToxicUpdate(response http.ResponseWriter, request *http.Re
 	}
 }
 
-func (server *server) ToxicDelete(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) ToxicDelete(response http.ResponseWriter, request *http.Request) {
 	vars := mux.Vars(request)
 
-	proxy, err := server.collection.Get(vars["proxy"])
+	proxy, err := server.Collection.Get(vars["proxy"])
 	if err != nil {
 		response.Header().Set("Content-Type", "application/json")
 		http.Error(response, server.apiError(err, http.StatusNotFound), http.StatusNotFound)
@@ -400,7 +400,7 @@ func (server *server) ToxicDelete(response http.ResponseWriter, request *http.Re
 	}
 }
 
-func (server *server) Version(response http.ResponseWriter, request *http.Request) {
+func (server *ApiServer) Version(response http.ResponseWriter, request *http.Request) {
 	response.Header().Set("Content-Type", "text/plain")
 	_, err := response.Write([]byte(Version))
 	if err != nil {
@@ -408,7 +408,7 @@ func (server *server) Version(response http.ResponseWriter, request *http.Reques
 	}
 }
 
-func (server *server) apiError(err error, code int) string {
+func (server *ApiServer) apiError(err error, code int) string {
 	data, err2 := json.Marshal(struct {
 		Title  string `json:"title"`
 		Status int    `json:"status"`

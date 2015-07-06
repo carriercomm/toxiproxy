@@ -22,7 +22,7 @@ import (
 
 type Toxic interface {
 	// Defines how packets flow through a ToxicStub. Pipe() blocks until the link is closed or interrupted.
-	Pipe(*stream.ToxicStub)
+	Pipe(*ToxicStub)
 }
 
 type ToxicWrapper struct {
@@ -30,6 +30,47 @@ type ToxicWrapper struct {
 	Name  string `json:"name"`
 	Type  string `json:"type"`
 	Index int    `json:"-"`
+}
+
+type ToxicStub struct {
+	Input     <-chan *stream.StreamChunk
+	Output    chan<- *stream.StreamChunk
+	Interrupt chan struct{}
+	running   chan struct{}
+	closed    chan struct{}
+}
+
+func NewToxicStub(input <-chan *stream.StreamChunk, output chan<- *stream.StreamChunk) *ToxicStub {
+	return &ToxicStub{
+		Interrupt: make(chan struct{}),
+		closed:    make(chan struct{}),
+		Input:     input,
+		Output:    output,
+	}
+}
+
+// Begin running a toxic on this stub, can be interrupted.
+func (s *ToxicStub) Run(toxic Toxic) {
+	s.running = make(chan struct{})
+	defer close(s.running)
+	toxic.Pipe(s)
+}
+
+// Interrupt the flow of data so that the toxic controlling the stub can be replaced.
+// Returns true if the stream was successfully interrupted.
+func (s *ToxicStub) InterruptToxic() bool {
+	select {
+	case <-s.closed:
+		return false
+	case s.Interrupt <- struct{}{}:
+		<-s.running // Wait for the running toxic to exit
+		return true
+	}
+}
+
+func (s *ToxicStub) Close() {
+	close(s.closed)
+	close(s.Output)
 }
 
 var ToxicRegistry map[string]Toxic
